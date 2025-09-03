@@ -10,6 +10,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Mic, MicOff, RotateCcw, Volume2, Wifi, WifiOff } from 'lucide-react-native';
+import LanguageSelector from '@/components/LanguageSelector';
+import { Language } from '@/types/translation';
 
 interface Translation {
   id: string;
@@ -28,22 +30,24 @@ export default function TranslateScreen() {
   const [toLanguage, setToLanguage] = useState('en');
   const [micAnimation] = useState(new Animated.Value(1));
 
-  const languages = [
+  const languages: Language[] = [
     { code: 'auto', name: 'Auto Detect', flag: '🌐' },
-    { code: 'en', name: 'English', flag: '🇺🇸' },
-    { code: 'es', name: 'Spanish', flag: '🇪🇸' },
-    { code: 'fr', name: 'French', flag: '🇫🇷' },
-    { code: 'de', name: 'German', flag: '🇩🇪' },
-    { code: 'it', name: 'Italian', flag: '🇮🇹' },
-    { code: 'pt', name: 'Portuguese', flag: '🇵🇹' },
-    { code: 'ru', name: 'Russian', flag: '🇷🇺' },
-    { code: 'ja', name: 'Japanese', flag: '🇯🇵' },
-    { code: 'ko', name: 'Korean', flag: '🇰🇷' },
-    { code: 'zh', name: 'Chinese', flag: '🇨🇳' },
-    { code: 'th', name: 'Thai', flag: '🇹🇭' },
-    { code: 'vi', name: 'Vietnamese', flag: '🇻🇳' },
-    { code: 'id', name: 'Indonesian', flag: '🇮🇩' },
-    { code: 'cs', name: 'Czech', flag: '🇨🇿' },
+    { code: 'en', name: 'English', flag: '🇺🇸', supported: true },
+    { code: 'zh', name: 'Chinese (Mandarin)', flag: '🇨🇳', supported: true },
+    { code: 'hi', name: 'Hindi', flag: '🇮🇳', supported: true },
+    { code: 'es', name: 'Spanish', flag: '🇪🇸', supported: true },
+    { code: 'fr', name: 'French', flag: '🇫🇷', supported: true },
+    { code: 'ar', name: 'Arabic', flag: '🇸🇦', supported: true },
+    { code: 'bn', name: 'Bengali', flag: '🇧🇩', supported: true },
+    { code: 'ru', name: 'Russian', flag: '🇷🇺', supported: true },
+    { code: 'pt', name: 'Portuguese', flag: '🇵🇹', supported: true },
+    { code: 'id', name: 'Indonesian', flag: '🇮🇩', supported: true },
+    { code: 'ur', name: 'Urdu', flag: '🇵🇰', supported: true },
+    { code: 'de', name: 'German', flag: '🇩🇪', supported: true },
+    { code: 'ja', name: 'Japanese', flag: '🇯🇵', supported: true },
+    { code: 'sw', name: 'Swahili', flag: '🇰🇪', supported: true },
+    { code: 'te', name: 'Telugu', flag: '🇮🇳', supported: true },
+    { code: 'ko', name: 'Korean', flag: '🇰🇷', supported: true },
   ];
 
   const getLanguageName = (code: string) => {
@@ -131,19 +135,23 @@ export default function TranslateScreen() {
       <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
         {/* Language Selection */}
         <View style={styles.languageContainer}>
-          <TouchableOpacity style={styles.languageSelector}>
-            <Text style={styles.languageFlag}>{getLanguageFlag(fromLanguage)}</Text>
-            <Text style={styles.languageName}>{getLanguageName(fromLanguage)}</Text>
-          </TouchableOpacity>
+          <LanguageSelector
+            selectedLanguage={fromLanguage}
+            onLanguageChange={setFromLanguage}
+            languages={languages}
+            title="Select Source Language"
+          />
           
           <TouchableOpacity style={styles.swapButton} onPress={swapLanguages}>
             <RotateCcw size={20} color="#64748b" />
           </TouchableOpacity>
           
-          <TouchableOpacity style={styles.languageSelector}>
-            <Text style={styles.languageFlag}>{getLanguageFlag(toLanguage)}</Text>
-            <Text style={styles.languageName}>{getLanguageName(toLanguage)}</Text>
-          </TouchableOpacity>
+          <LanguageSelector
+            selectedLanguage={toLanguage}
+            onLanguageChange={setToLanguage}
+            languages={languages.filter(lang => lang.code !== 'auto')}
+            title="Select Target Language"
+          />
         </View>
 
         {/* Translation Display */}
@@ -286,26 +294,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 32,
-  },
-  languageSelector: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#e2e8f0',
-    gap: 8,
-  },
-  languageFlag: {
-    fontSize: 20,
-  },
-  languageName: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#1e293b',
   },
   swapButton: {
     marginHorizontal: 12,

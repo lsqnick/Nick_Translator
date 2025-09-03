@@ -60,7 +60,7 @@ export default function LanguageSelector({
   return (
     <>
       <TouchableOpacity
-        style={styles.selector}
+        style={[styles.selector, { flex: 1 }]}
         onPress={() => setIsVisible(true)}
       >
         <Text style={styles.selectorFlag}>{selectedLang?.flag}</Text>
