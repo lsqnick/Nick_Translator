@@ -9,9 +9,25 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Mic, MicOff, RotateCcw, Volume2, Wifi, WifiOff } from 'lucide-react-native';
+import { Mic, Square, RotateCcw, Volume2, Wifi, WifiOff } from 'lucide-react-native';
 import LanguageSelector from '@/components/LanguageSelector';
 import { Language } from '@/types/translation';
+import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
+import { translationService } from '@/services/translationService';
+import TranslationDialog from '@/components/TranslationDialog';
+
+interface TranslationSegment {
+  id: string;
+  originalText: string;
+  translatedText: string;
+  isComplete: boolean;
+}
+
+interface TranslationDialog {
+  id: string;
+  segments: TranslationSegment[];
+  timestamp: Date;
+}
 
 interface Translation {
   id: string;
@@ -23,12 +39,23 @@ interface Translation {
 }
 
 export default function TranslateScreen() {
-  const [isRecording, setIsRecording] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
-  const [currentTranslation, setCurrentTranslation] = useState<Translation | null>(null);
+  const [translationDialogs, setTranslationDialogs] = useState<TranslationDialog[]>([]);
+  const [currentDialog, setCurrentDialog] = useState<TranslationDialog | null>(null);
   const [fromLanguage, setFromLanguage] = useState('auto');
   const [toLanguage, setToLanguage] = useState('en');
   const [micAnimation] = useState(new Animated.Value(1));
+  const [isTranslating, setIsTranslating] = useState(false);
+  
+  const {
+    isListening,
+    transcript,
+    confidence,
+    error,
+    startListening,
+    stopListening,
+    resetTranscript,
+  } = useSpeechRecognition();
 
   const languages: Language[] = [
     { code: 'auto', name: 'Auto Detect', flag: '🌐' },
@@ -59,7 +86,7 @@ export default function TranslateScreen() {
   };
 
   useEffect(() => {
-    if (isRecording) {
+    if (isListening) {
       const animation = Animated.loop(
         Animated.sequence([
           Animated.timing(micAnimation, {
@@ -77,27 +104,98 @@ export default function TranslateScreen() {
       animation.start();
       return () => animation.stop();
     }
-  }, [isRecording]);
+  }, [isListening]);
 
-  const startRecording = () => {
-    setIsRecording(true);
-    // Simulate speech recognition with mock translation
-    setTimeout(() => {
-      const mockTranslation: Translation = {
-        id: Date.now().toString(),
-        originalText: "Hello, how are you doing today?",
-        translatedText: "Hola, ¿cómo estás hoy?",
-        fromLanguage: 'en',
-        toLanguage: toLanguage,
-        timestamp: new Date(),
-      };
-      setCurrentTranslation(mockTranslation);
-      setIsRecording(false);
-    }, 3000);
+  // Handle real-time translation when transcript changes
+  useEffect(() => {
+    if (transcript && transcript.trim() && isListening) {
+      handleRealTimeTranslation(transcript);
+    }
+  }, [transcript, fromLanguage, toLanguage]);
+
+  const handleRealTimeTranslation = async (text: string) => {
+    if (!text.trim() || !isOnline) return;
+
+    setIsTranslating(true);
+
+    try {
+      // Detect language if auto-detect is enabled
+      let detectedFromLang = fromLanguage;
+      if (fromLanguage === 'auto') {
+        detectedFromLang = await translationService.detectLanguage(text);
+      }
+
+      // Get translation with RRT processing
+      const result = await translationService.translateWithRRT(
+        text,
+        detectedFromLang,
+        toLanguage,
+        undefined,
+        translationDialogs.flatMap(dialog => 
+          dialog.segments.map(segment => ({
+            id: segment.id,
+            originalText: segment.originalText,
+            translatedText: segment.translatedText,
+            fromLanguage: detectedFromLang,
+            toLanguage: toLanguage,
+            timestamp: new Date(),
+          }))
+        )
+      );
+
+      // Create or update current dialog
+      const segments = segmentText(text, result.translatedText);
+      
+      if (!currentDialog || currentDialog.segments.length >= 5) {
+        // Create new dialog if none exists or current one is full
+        const newDialog: TranslationDialog = {
+          id: Date.now().toString(),
+          segments: segments,
+          timestamp: new Date(),
+        };
+        setCurrentDialog(newDialog);
+      } else {
+        // Update existing dialog
+        const updatedDialog = {
+          ...currentDialog,
+          segments: segments,
+        };
+        setCurrentDialog(updatedDialog);
+      }
+    } catch (err) {
+      console.error('Translation error:', err);
+    } finally {
+      setIsTranslating(false);
+    }
   };
 
-  const stopRecording = () => {
-    setIsRecording(false);
+  const segmentText = (originalText: string, translatedText: string): TranslationSegment[] => {
+    // Simple sentence segmentation based on punctuation
+    const sentences = originalText.split(/[.!?]+/).filter(s => s.trim());
+    const translatedSentences = translatedText.split(/[.!?]+/).filter(s => s.trim());
+    
+    return sentences.slice(0, 5).map((sentence, index) => ({
+      id: `${Date.now()}-${index}`,
+      originalText: sentence.trim(),
+      translatedText: translatedSentences[index]?.trim() || sentence.trim(),
+      isComplete: !isListening,
+    }));
+  };
+
+  const handleStartRecording = () => {
+    resetTranscript();
+    setCurrentDialog(null);
+    startListening();
+  };
+
+  const handleStopRecording = () => {
+    stopListening();
+    
+    // Save current dialog to archive if it exists
+    if (currentDialog && currentDialog.segments.length > 0) {
+      setTranslationDialogs(prev => [...prev, currentDialog]);
+      setCurrentDialog(null);
+    }
   };
 
   const swapLanguages = () => {
@@ -109,8 +207,12 @@ export default function TranslateScreen() {
   };
 
   const speakTranslation = () => {
-    // Text-to-speech implementation would go here
-    console.log('Speaking translation:', currentTranslation?.translatedText);
+    if (currentDialog && currentDialog.segments.length > 0) {
+      const textToSpeak = currentDialog.segments
+        .map(segment => segment.translatedText)
+        .join('. ');
+      translationService.speakText(textToSpeak, toLanguage);
+    }
   };
 
   return (
@@ -156,35 +258,21 @@ export default function TranslateScreen() {
 
         {/* Translation Display */}
         <View style={styles.translationContainer}>
-          {currentTranslation ? (
-            <View style={styles.translationCard}>
-              <View style={styles.originalTextContainer}>
-                <Text style={styles.originalText}>{currentTranslation.originalText}</Text>
-                <Text style={styles.languageLabel}>
-                  {getLanguageName(currentTranslation.fromLanguage)}
-                </Text>
-              </View>
-              
-              <View style={styles.divider} />
-              
-              <View style={styles.translatedTextContainer}>
-                <Text style={styles.translatedText}>{currentTranslation.translatedText}</Text>
-                <View style={styles.translatedActions}>
-                  <Text style={styles.languageLabel}>
-                    {getLanguageName(currentTranslation.toLanguage)}
-                  </Text>
-                  <TouchableOpacity onPress={speakTranslation} style={styles.speakButton}>
-                    <Volume2 size={18} color="#2563eb" />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
+          {currentDialog && currentDialog.segments.length > 0 ? (
+            <TranslationDialog
+              dialog={currentDialog}
+              fromLanguage={fromLanguage === 'auto' ? 'en' : fromLanguage}
+              toLanguage={toLanguage}
+              getLanguageName={getLanguageName}
+              onSpeak={speakTranslation}
+              isLive={isListening}
+            />
           ) : (
             <View style={styles.placeholderContainer}>
               <Text style={styles.placeholderText}>
-                {isRecording ? 'Listening and translating...' : 'Tap the microphone to start translating'}
+                {isListening ? 'Listening and translating...' : 'Tap the microphone to start translating'}
               </Text>
-              {isRecording && (
+              {isListening && (
                 <View style={styles.listeningIndicator}>
                   <View style={styles.waveform}>
                     {[...Array(5)].map((_, i) => (
@@ -201,6 +289,15 @@ export default function TranslateScreen() {
                   </View>
                 </View>
               )}
+              {transcript && (
+                <View style={styles.liveTranscript}>
+                  <Text style={styles.transcriptLabel}>Listening:</Text>
+                  <Text style={styles.transcriptText}>{transcript}</Text>
+                  {isTranslating && (
+                    <Text style={styles.translatingText}>Translating...</Text>
+                  )}
+                </View>
+              )}
             </View>
           )}
         </View>
@@ -210,20 +307,20 @@ export default function TranslateScreen() {
           <TouchableOpacity
             style={[
               styles.micButton,
-              isRecording ? styles.micButtonRecording : styles.micButtonIdle,
+              isListening ? styles.micButtonRecording : styles.micButtonIdle,
             ]}
-            onPress={isRecording ? stopRecording : startRecording}
+            onPress={isListening ? handleStopRecording : handleStartRecording}
           >
             <Animated.View style={{ transform: [{ scale: micAnimation }] }}>
-              {isRecording ? (
-                <MicOff size={32} color="#ffffff" />
+              {isListening ? (
+                <Square size={32} color="#ffffff" />
               ) : (
                 <Mic size={32} color="#ffffff" />
               )}
             </Animated.View>
           </TouchableOpacity>
           <Text style={styles.micButtonText}>
-            {isRecording ? 'Tap to stop' : 'Hold to speak'}
+            {isListening ? 'Tap to stop' : 'Tap to speak'}
           </Text>
         </View>
 
@@ -374,6 +471,31 @@ const styles = StyleSheet.create({
     height: 20,
     backgroundColor: '#2563eb',
     borderRadius: 2,
+  },
+  liveTranscript: {
+    marginTop: 20,
+    padding: 16,
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  transcriptLabel: {
+    fontSize: 12,
+    color: '#64748b',
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  transcriptText: {
+    fontSize: 16,
+    color: '#1e293b',
+    lineHeight: 24,
+  },
+  translatingText: {
+    fontSize: 12,
+    color: '#2563eb',
+    fontStyle: 'italic',
+    marginTop: 8,
   },
   controlsContainer: {
     alignItems: 'center',
