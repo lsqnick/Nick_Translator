@@ -59,13 +59,17 @@ export default function TranslationDialogComponent({
           <Text style={styles.sectionLabel}>Original ({getLanguageName(fromLanguage)})</Text>
           <View style={styles.segmentsContainer}>
             {dialog.segments.map((segment, index) => (
-              <Text key={segment.id} style={[
-                styles.segmentText,
-                !segment.isComplete && styles.incompleteText
-              ]}>
-                {segment.originalText}
-                {index < dialog.segments.length - 1 && '. '}
-              </Text>
+              <React.Fragment key={segment.id}>
+                <Text style={[
+                  styles.segmentText,
+                  !segment.isComplete && styles.incompleteText
+                ]}>
+                  {segment.originalText}
+                </Text>
+                {index < dialog.segments.length - 1 && (
+                  <Text style={styles.segmentSeparator}>. </Text>
+                )}
+              </React.Fragment>
             ))}
             {isLive && !dialog.segments[dialog.segments.length - 1]?.isComplete && (
               <View style={styles.cursor} />
@@ -85,13 +89,17 @@ export default function TranslationDialogComponent({
           </View>
           <View style={styles.segmentsContainer}>
             {dialog.segments.map((segment, index) => (
-              <Text key={`translated-${segment.id}`} style={[
-                styles.translatedSegmentText,
-                !segment.isComplete && styles.incompleteTranslatedText
-              ]}>
-                {segment.translatedText}
-                {index < dialog.segments.length - 1 && '. '}
-              </Text>
+              <React.Fragment key={`translated-${segment.id}`}>
+                <Text style={[
+                  styles.translatedSegmentText,
+                  !segment.isComplete && styles.incompleteTranslatedText
+                ]}>
+                  {segment.translatedText}
+                </Text>
+                {index < dialog.segments.length - 1 && (
+                  <Text style={styles.segmentSeparator}>. </Text>
+                )}
+              </React.Fragment>
             ))}
             {isLive && (
               <View style={styles.processingIndicator}>
@@ -204,5 +212,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#2563eb',
     fontStyle: 'italic',
+  },
+  segmentSeparator: {
+    fontSize: 16,
+    lineHeight: 24,
+    color: '#64748b',
   },
 });

@@ -14,7 +14,7 @@ import LanguageSelector from '@/components/LanguageSelector';
 import { Language } from '@/types/translation';
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
 import { translationService } from '@/services/translationService';
-import TranslationDialog from '@/components/TranslationDialog';
+import TranslationDialog from '../../components/TranslationDialog';
 
 interface TranslationSegment {
   id: string;
