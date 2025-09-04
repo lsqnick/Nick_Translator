@@ -284,6 +284,23 @@ export default function SettingsScreen() {
           </View>
         ))}
         
+        <View style={styles.footer}>
+          <Text style={styles.versionText}>Nick Translator v2.1.0</Text>
+          <Text style={styles.buildText}>Build 2024.1.15</Text>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f8fafc',
+  },
+  header: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
     backgroundColor: '#ffffff',
     borderBottomWidth: 1,
     borderBottomColor: '#e2e8f0',
