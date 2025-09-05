@@ -59,7 +59,7 @@ export default function TranslationDialogComponent({
           <Text style={styles.sectionLabel}>Original ({getLanguageName(fromLanguage)})</Text>
           <View style={styles.segmentsContainer}>
             {dialog.segments.map((segment, index) => (
-              <React.Fragment key={segment.id}>
+              <View key={segment.id} style={styles.segmentWrapper}>
                 <Text style={[
                   styles.segmentText,
                   !segment.isComplete && styles.incompleteText
@@ -69,7 +69,7 @@ export default function TranslationDialogComponent({
                 {index < dialog.segments.length - 1 && (
                   <Text style={styles.segmentSeparator}>. </Text>
                 )}
-              </React.Fragment>
+              </View>
             ))}
             {isLive && !dialog.segments[dialog.segments.length - 1]?.isComplete && (
               <View style={styles.cursor} />
@@ -89,7 +89,7 @@ export default function TranslationDialogComponent({
           </View>
           <View style={styles.segmentsContainer}>
             {dialog.segments.map((segment, index) => (
-              <React.Fragment key={`translated-${segment.id}`}>
+              <View key={`translated-${segment.id}`} style={styles.segmentWrapper}>
                 <Text style={[
                   styles.translatedSegmentText,
                   !segment.isComplete && styles.incompleteTranslatedText
@@ -99,7 +99,7 @@ export default function TranslationDialogComponent({
                 {index < dialog.segments.length - 1 && (
                   <Text style={styles.segmentSeparator}>. </Text>
                 )}
-              </React.Fragment>
+              </View>
             ))}
             {isLive && (
               <View style={styles.processingIndicator}>
@@ -217,5 +217,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 24,
     color: '#64748b',
+  },
+  segmentWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });
