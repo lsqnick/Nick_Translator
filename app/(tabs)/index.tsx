@@ -15,6 +15,11 @@ import { Language } from '@/types/translation';
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
 import { translationService } from '@/services/translationService';
 import TranslationDialog from '../../components/TranslationDialog';
+import { useAuth } from '../../contexts/AuthContext';
+import { useAuthGuard } from '../../hooks/useAuthGuard';
+import { Modal } from 'react-native';
+import AuthScreen from '../../screens/AuthScreen';
+import EmailVerificationScreen from '../../screens/EmailVerificationScreen';
 
 interface TranslationSegment {
   id: string;
@@ -39,6 +44,14 @@ interface Translation {
 }
 
 export default function TranslateScreen() {
+  const { user, isEmailVerified } = useAuth();
+  const { 
+    checkAuth, 
+    showAuthModal, 
+    showVerificationModal, 
+    setShowAuthModal, 
+    setShowVerificationModal 
+  } = useAuthGuard();
   const [isOnline, setIsOnline] = useState(true);
   const [translationDialogs, setTranslationDialogs] = useState<TranslationDialog[]>([]);
   const [currentDialog, setCurrentDialog] = useState<TranslationDialog | null>(null);
@@ -183,6 +196,11 @@ export default function TranslateScreen() {
   };
 
   const handleStartRecording = () => {
+    // Check auth for premium features
+    if (!checkAuth(true)) {
+      return;
+    }
+    
     resetTranscript();
     setCurrentDialog(null);
     startListening();
@@ -233,6 +251,34 @@ export default function TranslateScreen() {
           )}
         </View>
       </View>
+
+      {/* Auth Modals */}
+      <Modal
+        visible={showAuthModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
+        <AuthScreen 
+          onSuccess={() => {
+            setShowAuthModal(false);
+            if (!isEmailVerified) {
+              setShowVerificationModal(true);
+            }
+          }}
+          onCancel={() => setShowAuthModal(false)}
+        />
+      </Modal>
+
+      <Modal
+        visible={showVerificationModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
+        <EmailVerificationScreen 
+          onSuccess={() => setShowVerificationModal(false)}
+          onCancel={() => setShowVerificationModal(false)}
+        />
+      </Modal>
 
       <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
         {/* Language Selection */}
