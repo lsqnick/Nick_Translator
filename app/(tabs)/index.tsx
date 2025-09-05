@@ -71,7 +71,7 @@ export default function TranslateScreen() {
   } = useSpeechRecognition();
 
   const languages: Language[] = [
-    { code: 'auto', name: 'Auto Detect', flag: '🌐' },
+    { code: 'auto', name: 'Auto Detect', flag: '🌐', supported: true },
     { code: 'en', name: 'English', flag: '🇺🇸', supported: true },
     { code: 'zh', name: 'Chinese (Mandarin)', flag: '🇨🇳', supported: true },
     { code: 'hi', name: 'Hindi', flag: '🇮🇳', supported: true },
@@ -322,15 +322,7 @@ export default function TranslateScreen() {
                 <View style={styles.listeningIndicator}>
                   <View style={styles.waveform}>
                     {[...Array(5)].map((_, i) => (
-                      <Animated.View
-                        key={i}
-                        style={[
-                          styles.waveBar,
-                          {
-                            animationDelay: `${i * 100}ms`,
-                          }
-                        ]}
-                      />
+                      <Animated.View key={i} style={styles.waveBar} />
                     ))}
                   </View>
                 </View>
