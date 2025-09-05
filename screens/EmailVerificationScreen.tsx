@@ -7,7 +7,7 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Mail, RefreshCw, X, CheckCircle } from 'lucide-react-native';
+import { Mail, RefreshCw, X, CircleCheck as CheckCircle } from 'lucide-react-native';
 import { useAuth } from '../contexts/AuthContext';
 
 interface EmailVerificationScreenProps {
