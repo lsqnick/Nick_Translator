@@ -59,17 +59,19 @@ export default function TranslationDialogComponent({
           <Text style={styles.sectionLabel}>Original ({getLanguageName(fromLanguage)})</Text>
           <View style={styles.segmentsContainer}>
             {dialog.segments.map((segment, index) => (
-              <React.Fragment key={segment.id}>
-                <Text style={[
-                  styles.segmentText,
-                  !segment.isComplete && styles.incompleteText
-                ]}>
+              <View style={styles.segmentWrapper} key={segment.id}>
+                <Text
+                  style={[
+                    styles.segmentText,
+                    !segment.isComplete && styles.incompleteText,
+                  ]}
+                >
                   {segment.originalText}
                 </Text>
                 {index < dialog.segments.length - 1 && (
                   <Text style={styles.segmentSeparator}>. </Text>
                 )}
-              </React.Fragment>
+              </View>
             ))}
             {isLive && !dialog.segments[dialog.segments.length - 1]?.isComplete && (
               <View style={styles.cursor} />
@@ -89,17 +91,22 @@ export default function TranslationDialogComponent({
           </View>
           <View style={styles.segmentsContainer}>
             {dialog.segments.map((segment, index) => (
-              <React.Fragment key={`translated-${segment.id}`}>
-                <Text style={[
-                  styles.translatedSegmentText,
-                  !segment.isComplete && styles.incompleteTranslatedText
-                ]}>
+              <View
+                style={styles.segmentWrapper}
+                key={`translated-${segment.id}`}
+              >
+                <Text
+                  style={[
+                    styles.translatedSegmentText,
+                    !segment.isComplete && styles.incompleteTranslatedText,
+                  ]}
+                >
                   {segment.translatedText}
                 </Text>
                 {index < dialog.segments.length - 1 && (
                   <Text style={styles.segmentSeparator}>. </Text>
                 )}
-              </React.Fragment>
+              </View>
             ))}
             {isLive && (
               <View style={styles.processingIndicator}>
