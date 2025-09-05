@@ -9,7 +9,8 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Volume2, Mic, Globe, Download, Shield, Bell, Moon, Palette, CircleHelp as HelpCircle, MessageCircle, Star, User, ChevronRight, Info } from 'lucide-react-native';
+import { Volume2, Mic, Globe, Download, Shield, Bell, Moon, Palette, CircleHelp as HelpCircle, MessageCircle, Star, User, ChevronRight, Info, LogOut } from 'lucide-react-native';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface SettingItem {
   id: string;
@@ -22,6 +23,7 @@ interface SettingItem {
 }
 
 export default function SettingsScreen() {
+  const { user, logout, isEmailVerified } = useAuth();
   const [settings, setSettings] = useState({
     autoDetectLanguage: true,
     enableVibration: true,
@@ -63,7 +65,58 @@ export default function SettingsScreen() {
     );
   };
 
+  const handleLogout = () => {
+    Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Sign Out', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await logout();
+              Alert.alert('Success', 'You have been signed out successfully.');
+            } catch (error: any) {
+              Alert.alert('Error', error.message);
+            }
+          }
+        },
+      ]
+    );
+  };
+
   const settingsSections = [
+    ...(user ? [{
+      title: 'Account',
+      items: [
+        {
+          id: 'accountInfo',
+          icon: <User size={20} color="#2563eb" />,
+          title: 'Account Information',
+          subtitle: user.email || 'No email',
+          type: 'navigation' as const,
+          action: () => {},
+        },
+        {
+          id: 'emailStatus',
+          icon: <Shield size={20} color={isEmailVerified ? '#10b981' : '#f59e0b'} />,
+          title: 'Email Verification',
+          subtitle: isEmailVerified ? 'Verified' : 'Not verified',
+          type: 'navigation' as const,
+          action: () => {},
+        },
+        {
+          id: 'logout',
+          icon: <LogOut size={20} color="#ef4444" />,
+          title: 'Sign Out',
+          subtitle: 'Sign out of your account',
+          type: 'action' as const,
+          action: handleLogout,
+        },
+      ],
+    }] : []),
     {
       title: 'Translation Settings',
       items: [
@@ -213,19 +266,19 @@ export default function SettingsScreen() {
         },
       ],
     },
-    {
+    ...(!user ? [{
       title: 'Account',
       items: [
         {
-          id: 'account',
-          icon: <User size={20} color="#64748b" />,
-          title: 'Account Settings',
-          subtitle: 'Manage subscription and profile',
+          id: 'signIn',
+          icon: <User size={20} color="#2563eb" />,
+          title: 'Sign In',
+          subtitle: 'Access premium features',
           type: 'navigation' as const,
           action: () => {},
         },
       ],
-    },
+    }] : []),
   ];
 
   const renderSettingItem = (item: SettingItem) => (
