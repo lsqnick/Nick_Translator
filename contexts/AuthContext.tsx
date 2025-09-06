@@ -119,7 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await signOut(auth);
       await SecureStore.deleteItemAsync('userToken');
-      if (GoogleSignin.hasPreviousSignIn()) {
+      if (await GoogleSignin.hasPreviousSignIn()) {
         await GoogleSignin.signOut();
       }
     } catch (error) {
