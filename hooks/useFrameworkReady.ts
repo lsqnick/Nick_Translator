@@ -1,13 +1,11 @@
 import { useEffect } from 'react';
 
 declare global {
-  interface Window {
-    frameworkReady?: () => void;
-  }
+  var frameworkReady: (() => void) | undefined;
 }
 
 export function useFrameworkReady() {
   useEffect(() => {
-    window.frameworkReady?.();
-  });
+    globalThis.frameworkReady?.();
+  }, []);
 }
