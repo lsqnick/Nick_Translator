@@ -78,8 +78,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signInWithGoogle = async () => {
     try {
       await GoogleSignin.hasPlayServices();
-      const { idToken } = await GoogleSignin.signIn();
-      const googleCredential = GoogleAuthProvider.credential(idToken);
+      const response = await GoogleSignin.signIn();
+      if (response.type !== 'success' || !response.data.idToken) {
+        throw new Error('Google sign-in failed. Please try again.');
+      }
+      const googleCredential = GoogleAuthProvider.credential(response.data.idToken);
       await signInWithCredential(auth, googleCredential);
     } catch (error: any) {
       if (error.code === 'SIGN_IN_CANCELLED') {
@@ -116,7 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await signOut(auth);
       await SecureStore.deleteItemAsync('userToken');
-      if (await GoogleSignin.isSignedIn()) {
+      if (GoogleSignin.hasPreviousSignIn()) {
         await GoogleSignin.signOut();
       }
     } catch (error) {
