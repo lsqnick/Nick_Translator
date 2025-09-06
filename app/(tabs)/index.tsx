@@ -124,7 +124,7 @@ export default function TranslateScreen() {
     if (transcript && transcript.trim() && isListening) {
       handleRealTimeTranslation(transcript);
     }
-  }, [transcript, fromLanguage, toLanguage]);
+  }, [transcript, fromLanguage, toLanguage, isListening]);
 
   const handleRealTimeTranslation = async (text: string) => {
     if (!text.trim() || !isOnline) return;
