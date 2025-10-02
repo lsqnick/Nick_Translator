@@ -21,7 +21,9 @@ export function useSpeechRecognition(): UseSpeechRecognitionReturn {
   const [transcript, setTranscript] = useState('');
   const [confidence, setConfidence] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const [simulationInterval, setSimulationInterval] = useState<NodeJS.Timeout | null>(null);
+  const [simulationInterval, setSimulationInterval] = useState<ReturnType<typeof setInterval> | null>(
+    null,
+  );
 
   const startListening = () => {
     setIsListening(true);
