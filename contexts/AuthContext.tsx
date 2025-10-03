@@ -13,6 +13,7 @@ import {
 } from 'firebase/auth';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import * as AppleAuthentication from 'expo-apple-authentication';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import { auth } from '../firebase.config';
 import { Platform } from 'react-native';
@@ -32,6 +33,8 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const USER_TOKEN_KEY = 'userToken';
+let secureStoreAvailabilityPromise: Promise<boolean> | null = null;
 
 // Configure Google Sign-in
 GoogleSignin.configure({
@@ -43,16 +46,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user: User | null) => {
-      setUser(user);
+    const handleAuthState = async (currentUser: User | null) => {
+      setUser(currentUser);
       setLoading(false);
-      
+
       // Store session info securely
-      if (user) {
-        SecureStore.setItemAsync('userToken', user.uid);
+      if (currentUser) {
+        await saveUserToken(currentUser.uid);
       } else {
-        SecureStore.deleteItemAsync('userToken');
+        await clearUserToken();
       }
+    };
+
+    const unsubscribe = onAuthStateChanged(auth, (currentUser: User | null) => {
+      handleAuthState(currentUser).catch((error) => {
+        console.warn('Failed to persist auth session', error);
+      });
     });
 
     return unsubscribe;
@@ -118,7 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     try {
       await signOut(auth);
-      await SecureStore.deleteItemAsync('userToken');
+      await clearUserToken();
       if (await GoogleSignin.hasPreviousSignIn()) {
         await GoogleSignin.signOut();
       }
@@ -178,6 +187,31 @@ export function useAuth() {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
+}
+
+async function isSecureStoreAvailable() {
+  if (!secureStoreAvailabilityPromise) {
+    secureStoreAvailabilityPromise = SecureStore.isAvailableAsync().catch(() => false);
+  }
+  return secureStoreAvailabilityPromise;
+}
+
+async function saveUserToken(token: string) {
+  const canUseSecureStore = await isSecureStoreAvailable();
+  if (canUseSecureStore) {
+    await SecureStore.setItemAsync(USER_TOKEN_KEY, token);
+  } else {
+    await AsyncStorage.setItem(USER_TOKEN_KEY, token);
+  }
+}
+
+async function clearUserToken() {
+  const canUseSecureStore = await isSecureStoreAvailable();
+  if (canUseSecureStore) {
+    await SecureStore.deleteItemAsync(USER_TOKEN_KEY);
+  } else {
+    await AsyncStorage.removeItem(USER_TOKEN_KEY);
+  }
 }
 
 function getErrorMessage(errorCode: string): string {
