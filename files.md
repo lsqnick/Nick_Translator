@@ -1,0 +1,46 @@
+# 项目文件结构说明
+
+- `README.md`：项目的整体说明文档，介绍 Nick Translator 应用的用途与基本信息。
+- `app.json`：Expo 应用的配置文件，定义应用名称、图标、启动画面等元数据。
+- `app/`：Expo Router 页面目录，组织应用的导航结构与各个界面组件。
+  - `_layout.tsx`：应用根部的布局组件，包裹路由栈并挂载认证上下文与状态栏。
+  - `+not-found.tsx`：定义未匹配到路由时显示的“页面不存在”界面。
+  - `(tabs)/`：底部标签页路由分组，包含主功能的多个页面。
+    - `_layout.tsx`：配置底部标签导航栏的外观与每个标签的图标。
+    - `index.tsx`：主翻译界面，负责语音识别、实时翻译、语言切换与结果展示。
+    - `archive.tsx`：翻译记录归档界面，提供搜索、筛选与历史翻译的操作入口。
+    - `subscription.tsx`：订阅方案页面，展示不同付费计划及对应权益，并处理购买流程。
+    - `settings.tsx`：设置界面，集中管理账号信息、翻译偏好、通知与支持等选项。
+- `assets/`：静态资源文件夹。
+  - `images/`：应用使用的图像资源。
+    - `favicon.png`：Web 端使用的网站图标。
+    - `icon.png`：Expo 项目的应用图标。
+- `babel.config.js`：Babel 构建配置，指定使用的预设与插件。
+- `babel-plugin-module-resolver.js`：模块路径别名配置，方便以 `@/` 等别名导入项目文件。
+- `components/`：可复用的界面组件集合。
+  - `AuthGate.tsx`：认证守卫组件，根据登录/验证状态弹出认证或验证模态框。
+  - `LanguageSelector.tsx`：语言选择器组件，支持搜索与弹窗选择语言。
+  - `TranslationCard.tsx`：翻译结果卡片，展示原文、译文并提供发音/分享/收藏操作。
+  - `TranslationDialog.tsx`：翻译对话组件，按片段展示实时对话的原文与译文。
+- `contexts/`：React 上下文定义目录。
+  - `AuthContext.tsx`：封装 Firebase 认证逻辑，提供登录、注册、第三方登录等方法。
+- `firebase.config.ts`：Firebase 初始化配置，创建应用实例并导出认证对象。
+- `GoogleService-Info.plist`：iOS 端 Firebase 与 Google 服务的原生配置文件。
+- `hooks/`：自定义 React Hooks。
+  - `useAuthGuard.ts`：认证守卫 Hook，管理登录与邮箱验证模态框状态。
+  - `useFrameworkReady.ts`：通知外部环境框架已加载完成的 Hook。
+  - `useSpeechRecognition.ts`：模拟语音识别流程的 Hook，提供实时转录与控制方法。
+- `metro.config.js`：Metro 构建配置文件，扩展对自定义路径别名的支持。
+- `node_modules/`：项目依赖包的安装目录（自动生成，不建议手动修改）。
+- `package.json`：项目依赖与脚本定义，描述应用名称、版本及所需库。
+- `package-lock.json`：依赖的精确版本锁定文件，确保安装一致性。
+- `services/`：业务服务模块。
+  - `translationService.ts`：翻译服务模拟层，包含语言检测、RRT 翻译与文本朗读方法。
+- `screens/`：整屏级界面组件。
+  - `AuthScreen.tsx`：登录/注册界面，处理邮箱密码登录与第三方登录流程。
+  - `EmailVerificationScreen.tsx`：邮箱验证提示界面，支持重新发送验证邮件与状态刷新。
+- `tsconfig.json`：TypeScript 编译配置，定义路径别名与编译选项。
+- `types/`：类型定义文件夹。
+  - `firebase-react-native.d.ts`：声明 Firebase React Native 持久化方法的类型扩展。
+  - `translation.ts`：翻译、语言、订阅计划与用户设置等数据结构的 TypeScript 接口。
+
